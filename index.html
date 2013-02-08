@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3 Heatmap</title>
+		<link rel="stylesheet" href="css/style.css">
+		<script src="js/jquery-1.9.0.js"></script>
+		<script src="js/jquery-ui-1.10.0.custom.js"></script>
+		<script src="js/d3.js"></script>
+		<script src="js/socket.io.min.js"></script>
+
+	</head>
+	<body>
+		<div id="header" title="This is a title">
+			<h1>CEIT Temperature Network</h1>
+			A visualisation of live temperature data.
+		</div>
+		<script>
+
+		/*//////////////////////
+		//  SVG Canvas Setup  //
+		//////////////////////*/
+
+		var temps = {};
+
+		// Width & Height
+		var w = 800;
+		var h = 550;
+
+		// Append the canvas
+		var svg = d3.select("body")
+			.append("div")
+			.attr("id", "svg_canvas")
+			.append("svg")
+			.attr("id", "canvas")
+			.attr("width", w)
+			.attr("height", h)
+			.attr("stroke", "black")
+			.attr("stroke-width", 2);
+
+		// Draw the Visualisation layer
+		var vis = svg.append("image")
+			.attr("xlink:href", "floor4.png")
+			.attr("width", 800)
+			.attr("height", 550);
+
+		// Draw the Overlay layer
+		var floor_overlay = svg.append("image")
+			.attr("xlink:href", "floor4_o.png")
+			.attr("width", 800)
+			.attr("height", 550);
+
+		/*///////////////////////
+		//  General Functions  //
+		///////////////////////*/
+		var level = 4;
+
+		// Switching the Level
+		function switchLevel(level_no) {
+			if (level_no != level) {
+				level = level_no;
+				refreshDrawing();
+			}
+		}
+
+		function refreshDrawing() {
+			// Hide the canvas
+			$("#svg_canvas").animate({
+				opacity: 0
+			}, 200, function() {
+
+				vis.attr("xlink:href", "floor" + level + ".png");
+				floor_overlay.attr("xlink:href", "floor" + level + "_o.png");
+
+				svg.selectAll("g")
+					.attr("display", function(d) {
+						if (d.level == level) {
+							return "inline";
+						} else {
+							return "none";
+						}
+					});
+
+				// Show the canvas
+				$("#svg_canvas").animate({
+					opacity: 1
+				}, 200);
+			});
+		}
+
+		function hideGraph() {
+
+			// Fade out the graph
+			$('#graph').animate({
+				opacity: 0
+			}, 200, function() {
+				$('#graph').css("display", "none");
+			});
+		}
+
+		function showGraph( sensor_id ) {
+			// Update the graph info
+			// var new_imagesrc =  
+			$('#graph_img').attr("src", "")
+
+			// Fade in the graph
+			$('#graph').css("display", "inline")
+				.animate({
+					opacity: 1
+				}, 200);
+		}
+
+		/*///////////////////////
+		//  Socket Connection  //
+		///////////////////////*/
+
+		// Handle MQTT data
+		function onReceiveData(msg) {
+			var data = jQuery.parseJSON(msg.payload);
+		}
+
+		function refreshVisualisation() {
+			vis.attr("xlink:href", "floor" + level + ".png");
+
+		}
+
+		function onReceiveSensorInfo(msg) {
+			data = $.map(msg, function(k ,v) { 
+				k.id = v;
+				return k;
+			});
+
+			// Sensors
+			var sensors = svg.selectAll("g")
+				.data(data)
+				.enter()
+				.append("g")
+				.attr("display", function(d, i) {
+					if (d.level == level) {
+						return "inline";
+					} else {
+						return "none";
+					}
+				});
+
+			var circles = sensors
+				.append("circle")
+				.attr("cx", function(d) {
+					return d.x;
+				})
+				.attr("cy", function(d) {
+					return d.y;
+				})
+				.attr("r", 10)
+				.attr("fill", "white")
+				.attr("class", "sensor")
+				.attr("id", function(d) {
+					return d.id.substring(0,2);
+				})
+				.attr("title", "This is a tooltip.")
+				.on("mouseover", function(d) {
+
+					// Fill the tooltip
+
+					id = '#' + d.id.substring(0,2);
+
+					temp = document.getElementById("temp");
+					temp.innerHTML = temps[d.id] + " &#186C";
+
+					voltage = document.getElementById("voltage");
+					voltage.innerHTML = temps[d.id.substring(0,2) + ".11.0"];
+
+					id_html = document.getElementById("sensor_id");
+					id_html.innerHTML = d.id;
+
+					// Show the tooltip
+					
+					$('#tooltip').position({
+						my: "left-70 top+24",
+						at: "center bottom",
+						of: id
+					})
+					$('#tooltip').animate({
+						opacity: 1
+					}, 200);
+
+				})
+				.on("mouseout", function(d) {
+					$('#tooltip').animate({
+						opacity: 0
+					}, 200);
+				});
+
+			// show the canvas
+			$('#svg_canvas').animate({
+				opacity: 1
+			}, 2000);
+		}
+
+		// Create connection
+		var socket = io.connect('http://localhost:5000');
+
+		// When connected
+		socket.on('connect', function () {
+
+			// When receiving MQTT data
+			socket.on('mqtt', function (msg) {
+				var data = jQuery.parseJSON(msg.payload);
+				temps[msg.id] = msg.temp;
+		    });
+
+		    socket.on('refresh_visualisation', function (msg) {
+		    	refreshVisualisation();
+		    })
+
+		    // Tell the webserver what to subscribe to
+		    socket.emit('subscribe',{topic:'/LIB/3d/data'});
+
+		    socket.on('sensor_info', function (msg) {
+		    	// Handle sensor info
+		    	onReceiveSensorInfo(msg);
+		    });
+
+		    // When receiving 'retained' MQTT data
+		    socket.on('retained', function (msg) {
+		    	jQuery.each(msg, function(id, temp) {
+		    		temps[id] = temp;
+		    	});
+		    });
+		});
+		</script>
+		<div>
+			<ul class="buttons">
+				<li onclick="switchLevel(1)">Floor 1</li>
+				<li onclick="switchLevel(2)">Floor 2</li>
+				<li onclick="switchLevel(3)">Floor 3</li>
+				<li onclick="switchLevel(4)">Floor 4</li>
+			</ul>
+		</div>
+		<div id="tooltip">
+			<p id="temp"></p>
+			<table id="tooltip_table">
+				<tr>
+					<td>Voltage:</td>
+					<td id="voltage"></td>
+				</tr>
+				<tr>
+					<td>ID:</td>
+					<td id="sensor_id"></td>
+				</tr>
+				<tr>
+					<td>Updated:</td>
+					<td id="last_updated"></td>
+				</tr>
+			</table>
+		</div>
+		<div id="footer_holder">
+			<div id="footer">
+				Copyright &copy; Your Name
+				<script>
+					var d = new Date()
+					document.write(d.getFullYear())
+				</script>
+			</div>
+		</div>
+	</body>
+</html>
