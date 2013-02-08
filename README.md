@@ -1,13 +1,10 @@
-SensorVisualisation Version 0.9 08/01/2013
-
 GENERAL USE
 ------------
 SensorVisualisation is a simple webpage and webserver for visualising data collected by sensors within an area. Data is taken from an MQTT stream, a visualisation is processed, 
 and the result is presented as an interactive webpage.
 
-This package is useful for students looking to survey temperature, humidity or other variables 
-within an environment or anyone else that is interested in visualising sensor data.
-----------------------------------------------------------------------------------------------
+This package is useful for students looking to survey temperature, humidity or other variables within an environment or anyone else that is interested in visualising sensor data.
+
 
 Setup & Installation
 ---------------------
@@ -26,10 +23,10 @@ Setup & Installation
 2. Configure the WebServer:
 
 Open web_server.js in a text editor and change the following lines at the top of the file:
-
+```
 Change: var server = '';
-    To: var server = [ip address of mqtt server];
-    Eg: var server = 130.102.23.4;
+To: var server = [ip address of mqtt server];
+Eg: var server = 130.102.23.4;
 
 Change: var topic = '';
     To: var topic = [put your data topic here];
@@ -45,21 +42,25 @@ Change: var client = new mqtt.MQTTClient(#, server, '');
 
 Change: visualisation_cmd = '';
     To: visualisation_cmd = 'python [your python visuliasation generation file]';
+    Eg: visualisation_cmd = 'python heatmap.py';
+```
 
 3. Create a visualisation generation script in Python
 
 An example script 'heatmap.py' is supplied is the root directory.
 
-The visualisation script should follow the general format :
-	------------------------------------------------------
-	# Load data from data.json & sensors.json
+The visualisation script should follow the general format:
 
-	# Manipulate the data above 
+```python
+# Load data from data.json & sensors.json
 
-	# Create a PNG compliant list
+# Manipulate the data above 
 
-	# Save the PNG
-	------------------------------------------------------
+# Create a PNG compliant list
+
+# Save the PNG
+```
+
 
 4. Choose Area Image Overlays:
 
@@ -73,15 +74,17 @@ show the underlying visulisation layer.
 Run the web server:
 
 In Terminal type:
+```
 $ cd /directory/of/the/web/server
 $ node web_server.js
+```
 
 In a web browser open index.html
 
 If everything worked correctly you should see your visualisation in your web browser that 
 updates automatically when new data is published to your specified MQTT topic.
-----------------------------------------------------------------------------------------------
 
+----------
 Contact Me:
 
 Email: roscoe.hart@me.com
