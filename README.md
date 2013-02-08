@@ -22,6 +22,7 @@ Setup & Installation
 	- The Python PNG module: 
 	http://packages.python.org/pypng/png.html
 
+
 2. Configure the WebServer:
 
 Open web_server.js in a text editor and change the following lines at the top of the file:
