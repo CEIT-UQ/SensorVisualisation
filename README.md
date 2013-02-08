@@ -15,13 +15,10 @@ Setup & Installation
 1. Install Dependencies:
 	- nodejs
 	http://nodejs.org/
-
 	- SocketIO
 	In Terminal type: npm install socket.io
-
 	- Python 2.7
 	http://www.python.org/download/
-
 	- The Python PNG module: 
 	http://packages.python.org/pypng/png.html
 
