@@ -69,7 +69,11 @@ Example images can be seen in the root directory.
 The images should be made so that transparent regions are the parts of the image that will 
 show the underlying visulisation layer.
 
-5. Testing:
+5. Sensor Configuration:
+
+
+
+6. Testing:
 
 Run the web server:
 
